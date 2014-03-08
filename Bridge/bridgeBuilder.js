@@ -1,8 +1,11 @@
 
 var GRAVITY = 9.81
 
-var dt = .0001;//.005;//1.;
-var iterations = 100.;//calculations per frame
+//dt is directly proportional to user satisfaction
+//iterations just makes it run right.
+//tForEachCalculation is inversely proportional to how well it runs.
+var dt = .002;
+var iterations = 2000.;//calculations per frame
 var tForEachCalculation = dt/iterations;
 
 var GRAPHICS_HEIGHT = document.getElementById("graphics").clientHeight;
@@ -107,16 +110,13 @@ function Node(x, y, fixedX, fixedY, weight) {
         return this.velocity()>1e-3;
     }
     
-    this.setWeight = function(wt) {
-        this.weight=wt;
-        this.mass=this.weight/GRAVITY;
-    }
+    //mass is stored completely separately from weight. When using mass, though, make sure to add the weight/GRAVITY
     this.mass = 0;
     
     if (weight) {
-        this.setWeight(weight);//weight of load, regardless of tension forces
+        this.weight = weight;//weight of load, regardless of tension forces
     } else {
-        this.setWeight(0);
+        this.weight = 0;
     }
     
     //does not deep copy beams. instead, sets them to []
@@ -163,6 +163,7 @@ function Node(x, y, fixedX, fixedY, weight) {
             //critical damping
             var beamForce = beam.storedForce;
             var node = beam.otherNode(this);
+            
             var damping = 2.0*Math.sqrt(beam.k * (this.mass + this.weight/GRAVITY));
             var direction = this.directionToNode(node);
             // use dot product of relative node velocity and strut direction
@@ -185,10 +186,6 @@ function Node(x, y, fixedX, fixedY, weight) {
         
         force.y-=this.mass*GRAVITY;
         force.y-=this.weight;
-        if (force.y>0) {
-            console.log("AAAAH");
-        }
-        //force.y-=this.weight;
         if (this.fixedX) force.x=0;
         if (this.fixedY) force.y=0;
         
