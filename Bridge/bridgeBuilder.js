@@ -83,7 +83,9 @@ function Beam(node1, node2, density, elasticModulus, width) {
         // attempt to estimate average spring force during the next timestep
         var lengthrate = Math.sin(direction)*(this.node2.vy-this.node1.vy) +
             Math.cos(direction)*(this.node2.vx - this.node1.vx);
-        var force = this.k*(extension + lengthrate*timestep/2.0);        
+        var lengthaccel = Math.sin(direction)*(this.node2.ay-this.node2.ay) +
+            Math.cos(direction)*(this.node2.ax - this.node1.ax);
+        var force = this.k*(extension + lengthrate*timestep/2.0 + lengthaccel*timestep*timestep/6.0);        
         return force;
     }
     
