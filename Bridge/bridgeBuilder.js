@@ -26,7 +26,7 @@ var started= false;
 function Beam(node1, node2, density, elasticModulus, width) {
     this.node1 = node1;
     this.node2 = node2;
-    
+   
     this.type="Beam";
     
     this.length = function() {
@@ -73,14 +73,17 @@ function Beam(node1, node2, density, elasticModulus, width) {
         return this.k*(this.length()-this.restLength);
     }*/
     
-    this.calculateForce = function() {
-        this.storedForce = this.force();
+    this.calculateForce = function(timestep) {
+        this.storedForce = this.force(timestep);
     }
     
-    this.force = function() {
+    this.force = function(timestep) {
         var extension = this.length()-this.restLength;
-        var force = this.k*extension;
-        
+        var direction = this.node1.directionToNode(this.node2);
+        // attempt to estimate average spring force during the next timestep
+        var lengthrate = Math.sin(direction)*(this.node2.vy-this.node1.vy) +
+            Math.cos(direction)*(this.node2.vx - this.node1.vx);
+        var force = this.k*(extension + lengthrate*timestep/2.0);        
         return force;
     }
     
@@ -155,7 +158,7 @@ function Node(x, y, fixedX, fixedY, weight) {
     //they must sum to 0 for the bridge to be in equilibrium
     //this function, therefore, will return zero when the node is in equilibrium
     //returns force vector {"x":0, "y":0}
-    this.netForce = function() {
+    this.netForce = function(timestep) {
         var force = {"x":0., "y":0.};
         var dampingForce = {"x":0., "y":0.};
         for (beamI in this.beams) {
@@ -183,7 +186,7 @@ function Node(x, y, fixedX, fixedY, weight) {
         
         force.x-=dampingForce.x;
         force.y-=dampingForce.y;
-        
+                
         force.y-=this.mass*GRAVITY;
         force.y-=this.weight;
         if (this.fixedX) force.x=0;
@@ -192,8 +195,8 @@ function Node(x, y, fixedX, fixedY, weight) {
         return force;
     }
     
-    this.netForceMagnitude = function() {
-        var force = this.netForce();
+    this.netForceMagnitude = function(timestep) {
+        var force = this.netForce(timestep);
         return Math.sqrt(force.x*force.x+force.y*force.y);
     }
     
@@ -246,14 +249,14 @@ function Bridge(nodes, beams) {
     
     for (beamI in this.beams) {
         var beam = this.beams[beamI];
-        beam.calculateForce();
+        beam.calculateForce(0);
     }
     
     
     this.moveForTime = function(timestep) {
         for (beamI in this.beams) {
             var beam = this.beams[beamI];
-            beam.calculateForce();
+            beam.calculateForce(timestep);
         }
         for (nodeI in this.nodes) {
             var node = this.nodes[nodeI];
