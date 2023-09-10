@@ -1,4 +1,3 @@
-
 var logBase10 = function(value) {
     return Math.log(value)/Math.log(10);
 }
